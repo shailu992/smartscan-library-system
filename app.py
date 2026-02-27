@@ -156,6 +156,84 @@ def check_reminders():
 
     return jsonify({"message": "Reminder check completed"})
 
+@app.route("/dashboard-summary")
+def dashboard_summary():
+    total_students = students_col.count_documents({})
+    total_books = books_col.count_documents({})
+    active_borrowings = issues_col.count_documents({"return_date": None})
+
+    overdue_books = issues_col.count_documents({
+        "due_date": {"$lt": datetime.now()},
+        "return_date": None
+    })
+
+    return jsonify({
+        "totalStudents": total_students,
+        "totalBooks": total_books,
+        "activeBorrowings": active_borrowings,
+        "overdueBooks": overdue_books,
+        "fineRevenue": 0
+    })
+
+@app.route("/borrow-trends")
+def borrow_trends():
+    issues = issues_col.find({})
+
+    month_count = {}
+
+    for issue in issues:
+        month = issue["issue_date"].strftime("%b")
+        month_count[month] = month_count.get(month, 0) + 1
+
+    return jsonify({
+        "months": list(month_count.keys()),
+        "counts": list(month_count.values())
+    })
+
+@app.route("/popular-books")
+def popular_books():
+    issues = issues_col.find({})
+    book_count = {}
+
+    for issue in issues:
+        barcode = issue["book_barcode"]
+        book_count[barcode] = book_count.get(barcode, 0) + 1
+
+    top_books = sorted(book_count.items(), key=lambda x: x[1], reverse=True)[:5]
+
+    titles = []
+    counts = []
+
+    for barcode, count in top_books:
+        book = books_col.find_one({"book_barcode": barcode})
+        if book:
+            titles.append(book["title"])
+            counts.append(count)
+
+    return jsonify({
+        "books": titles,
+        "counts": counts
+    })
+
+@app.route("/recent-transactions")
+def recent_transactions():
+    issues = issues_col.find().sort("issue_date", -1).limit(5)
+
+    result = []
+
+    for issue in issues:
+        student = students_col.find_one({"student_barcode": issue["student_barcode"]})
+        book = books_col.find_one({"book_barcode": issue["book_barcode"]})
+
+        result.append({
+            "student": student["name"] if student else "Unknown",
+            "book": book["title"] if book else "Unknown",
+            "issueDate": issue["issue_date"].strftime("%Y-%m-%d"),
+            "status": "Returned" if issue["return_date"] else "Issued"
+        })
+
+    return jsonify(result)
+
 # ------------------ RUN ------------------
 import os
 
