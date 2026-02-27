@@ -63,35 +63,39 @@ def issue_book():
     student_barcode = data.get("student_barcode", "").strip()
     book_barcode = data.get("book_barcode", "").strip()
 
-    student = students_col.find_one({"student_barcode": student_barcode})
-    book = books_col.find_one({
-        "book_barcode": book_barcode,
-        "status": "AVAILABLE"
+    print("Received:", student_barcode, book_barcode)
+
+    student = students_col.find_one({
+        "student_barcode": student_barcode
     })
 
-    if not student or not book:
-        return jsonify({"error": "Invalid student or book"}), 400
+    book = books_col.find_one({
+        "book_barcode": book_barcode
+    })
+
+    if not student:
+        return jsonify({"error": "Student not found"}), 400
+
+    if not book:
+        return jsonify({"error": "Book not found"}), 400
+
+    if book.get("status") != "AVAILABLE":
+        return jsonify({"error": "Book already issued"}), 400
 
     issue_date = datetime.now()
     due_date = issue_date + timedelta(days=14)
 
     issues_col.insert_one({
-        "student_barcode": data["student_barcode"],
-        "book_barcode": data["book_barcode"],
+        "student_barcode": student_barcode,
+        "book_barcode": book_barcode,
         "issue_date": issue_date,
         "due_date": due_date,
         "return_date": None
     })
 
     books_col.update_one(
-        {"book_barcode": data["book_barcode"]},
+        {"book_barcode": book_barcode},
         {"$set": {"status": "ISSUED"}}
-    )
-
-    send_email(
-        student["email"],
-        "Book Issued",
-        f"Your book is issued. Due date: {due_date.date()}"
     )
 
     return jsonify({
