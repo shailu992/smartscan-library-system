@@ -237,10 +237,7 @@ def recent_transactions():
         })
 
     return jsonify(result)
-@app.route("/test-db")
-def test_db():
-    count = students_col.count_documents({})
-    return jsonify({"students_count": count})
+
 # ------------------ RUN ------------------
 import os
 
