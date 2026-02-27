@@ -13,7 +13,7 @@ load_dotenv()
 MONGO_URI = os.getenv("MONGO_URI")
 
 client = MongoClient(MONGO_URI)
-db = client["smartscan_library"]
+db = client["Smartscan-library"]
 
 students_col = db["students"]
 books_col = db["books"]
@@ -237,7 +237,10 @@ def recent_transactions():
         })
 
     return jsonify(result)
-
+@app.route("/test-db")
+def test_db():
+    count = students_col.count_documents({})
+    return jsonify({"students_count": count})
 # ------------------ RUN ------------------
 import os
 
