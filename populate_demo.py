@@ -25,6 +25,10 @@ for s in students:
 
 # Ensure all books exist and status AVAILABLE
 books = [
+    {"book_barcode": "Book-001", "title": "Data Structures", "author": "Mark Allen Weiss", "status": "AVAILABLE"},
+    {"book_barcode": "Book-002", "title": "Artificial Intelligence", "author": "Stuart Russell", "status": "AVAILABLE"},
+    {"book_barcode": "Book-003", "title": "Operating Systems", "author": "Abraham Silberschatz", "status": "AVAILABLE"},
+    {"book_barcode": "Book-004", "title": "Database Management Systems", "author": "Ramez Elmasri", "status": "AVAILABLE"},
     {"book_barcode": "Book-005", "title": "Computer Networks", "author": "Andrew S. Tanenbaum", "status": "AVAILABLE"},
     {"book_barcode": "Book-006", "title": "Compiler Design", "author": "Alfred V. Aho", "status": "AVAILABLE"},
     {"book_barcode": "Book-007", "title": "Software Engineering", "author": "Ian Sommerville", "status": "AVAILABLE"},
