@@ -60,9 +60,12 @@ def add_book():
 def issue_book():
     data = request.json
 
-    student = students_col.find_one({"student_barcode": data["student_barcode"]})
+    student_barcode = data.get("student_barcode", "").strip()
+    book_barcode = data.get("book_barcode", "").strip()
+
+    student = students_col.find_one({"student_barcode": student_barcode})
     book = books_col.find_one({
-        "book_barcode": data["book_barcode"],
+        "book_barcode": book_barcode,
         "status": "AVAILABLE"
     })
 
