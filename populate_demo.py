@@ -22,7 +22,8 @@ books = [
     {"book_barcode": "Book-001", "title": "Data Structures", "author": "Mark Allen Weiss"},
     {"book_barcode": "Book-002", "title": "Artificial Intelligence", "author": "Author B"},
     {"book_barcode": "Book-003", "title": "Operating Systems", "author": "Abraham Silberschatz"},
-    {"book_barcode": "Book-004", "title": "Database Management Systems", "author": "Korth"}
+    {"book_barcode": "Book-004", "title": "Database Management Systems", "author": "Korth"},
+    {"book_barcode": "Book-005", "title": "Machine Learning", "author": "Author A"}
 ]
 
 for b in books:
