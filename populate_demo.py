@@ -18,7 +18,7 @@ books_col.delete_many({})
 
 # ------------------ INSERT STUDENTS ------------------
 students = [
-    {"student_barcode": "202404006930", "name": "Student 8", "department": "CSM", "email": "student8@example.com"},
+    {"student_barcode": "202304006811", "name": "Student 8", "department": "CSM", "email": "student8@example.com"},
     {"student_barcode": "202404006263", "name": "Student 9", "department": "CAI", "email": "student9@example.com"},
     {"student_barcode": "202404006315", "name": "Student 10", "department": "CAI", "email": "student10@example.com"},
     {"student_barcode": "202404006927", "name": "Student 11", "department": "CDS", "email": "student11@example.com"}
