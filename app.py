@@ -91,7 +91,11 @@ def issue_book():
         f"Your book is issued. Due date: {due_date.date()}"
     )
 
-    return jsonify({"message": "Book issued successfully"})
+    return jsonify({
+        "message": "Book issued successfully",
+        "issue_date": issue_date.strftime("%Y-%m-%d"),
+        "due_date": due_date.strftime("%Y-%m-%d")
+    })
 
 # ------------------ RETURN BOOK ------------------
 @app.route("/return-book", methods=["POST"])
