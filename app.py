@@ -156,7 +156,7 @@ def return_book():
         {"book_barcode": data["book_barcode"]},
         {"$set": {"status": "AVAILABLE"}}
     )
-
+    print("new version running")
     return jsonify({
         "message": "Book returned successfully"
     })
