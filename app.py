@@ -51,7 +51,11 @@ def add_book():
         "book_barcode": data["barcode"],
         "title": data["title"],
         "author": data["author"],
-        "status": "AVAILABLE"
+        "status": "AVAILABLE",
+
+        "total_count": int(data["total_count"]),
+        "available_count": int(data["total_count"]),
+        "issued_count": 0
     })
     return jsonify({"message": "Book added"})
 
@@ -79,8 +83,10 @@ def issue_book():
     if not book:
         return jsonify({"error": "Book not found"}), 400
 
-    if book.get("status") != "AVAILABLE":
-        return jsonify({"error": "Book already issued"}), 400
+    #if book.get("status") != "AVAILABLE":
+        #return jsonify({"error": "Book already issued"}), 400
+    if book.get("available_count", 0) <= 0:
+        return jsonify({"error": "No copies available"}), 400
     
 
     issue_date = datetime.now()
@@ -93,11 +99,29 @@ def issue_book():
         "due_date": due_date,
         "return_date": None
     })
+    new_available = book["available_count"] - 1
+    new_issued = book["issued_count"] + 1
+
+    new_status = "AVAILABLE"
+
+    if new_available == 0:
+        new_status = "ISSUED"
 
     books_col.update_one(
         {"book_barcode": book_barcode},
-        {"$set": {"status": "ISSUED"}}
+        {
+            "$set": {
+                "available_count": new_available,
+                "issued_count": new_issued,
+                "status": new_status
+            }
+        }
     )
+
+    #books_col.update_one(
+        #{"book_barcode": book_barcode},
+        #{"$set": {"status": "ISSUED"}}
+    #)
 
     return jsonify({
         "message": "Book issued successfully",
@@ -117,11 +141,27 @@ def return_book():
         },
         {"$set": {"return_date": datetime.now()}}
     )
+    book = books_col.find_one({
+    "book_barcode": data["book_barcode"]
+})
+
+    new_available = book["available_count"] + 1
+    new_issued = book["issued_count"] - 1
 
     books_col.update_one(
         {"book_barcode": data["book_barcode"]},
-        {"$set": {"status": "AVAILABLE"}}
+        {
+            "$set": {
+                "available_count": new_available,
+                "issued_count": new_issued,
+                "status": "AVAILABLE"
+            }
+        }
     )
+    #books_col.update_one(
+        #{"book_barcode": data["book_barcode"]},
+        #{"$set": {"status": "AVAILABLE"}}
+    #)
 
     return jsonify({"message": "Book returned successfully"})
 
