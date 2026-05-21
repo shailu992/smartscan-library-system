@@ -79,16 +79,9 @@ def issue_book():
     if not book:
         return jsonify({"error": "Book not found"}), 400
 
-    #if book.get("status") != "AVAILABLE":
-        #return jsonify({"error": "Book already issued"}), 400
-    # Double-check active issue record
-    active_issue = issues_col.find_one({
-        "book_barcode": book_barcode,
-        "return_date": None
-    })
-
-    if active_issue or book.get("status") != "AVAILABLE":
+    if book.get("status") != "AVAILABLE":
         return jsonify({"error": "Book already issued"}), 400
+    
 
     issue_date = datetime.now()
     due_date = issue_date + timedelta(days=14)
@@ -113,42 +106,15 @@ def issue_book():
     })
 
 # ------------------ RETURN BOOK ------------------
-#@app.route("/return-book", methods=["POST"])
-#def return_book():
-    data = request.json
-
-    #issues_col.update_one(
-        #{
-            #"book_barcode": data["book_barcode"],
-            #"return_date": None
-        #},
-        #{"$set": {"return_date": datetime.now()}}
-    #)
-
-    #books_col.update_one(
-        #{"book_barcode": data["book_barcode"]},
-        #{"$set": {"status": "AVAILABLE"}}
-    #)
-
-    #return jsonify({"message": "Book returned successfully"})
-
-
 @app.route("/return-book", methods=["POST"])
 def return_book():
     data = request.json
 
-    active_issue = issues_col.find_one({
-        "book_barcode": data["book_barcode"],
-        "return_date": None
-    })
-    print("ACTIVE ISSUE:", active_issue)
-    if not active_issue:
-        return jsonify({
-            "error": "No active issue found"
-        }), 400
-
     issues_col.update_one(
-        {"_id": active_issue["_id"]},
+        {
+            "book_barcode": data["book_barcode"],
+            "return_date": None
+        },
         {"$set": {"return_date": datetime.now()}}
     )
 
@@ -156,10 +122,9 @@ def return_book():
         {"book_barcode": data["book_barcode"]},
         {"$set": {"status": "AVAILABLE"}}
     )
-    print("new version running")
-    return jsonify({
-        "message": "Book returned successfully"
-    })
+
+    return jsonify({"message": "Book returned successfully"})
+
 # ------------------ RECOMMEND BOOKS ------------------
 @app.route("/recommend/<student_barcode>")
 def recommend(student_barcode):
