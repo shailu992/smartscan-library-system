@@ -141,7 +141,7 @@ def return_book():
         "book_barcode": data["book_barcode"],
         "return_date": None
     })
-
+    print("ACTIVE ISSUE:", active_issue)
     if not active_issue:
         return jsonify({
             "error": "No active issue found"
