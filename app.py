@@ -667,6 +667,202 @@ def recent_transactions():
 
 
 
+# ================= STUDENT SEARCH =================
+
+@app.route("/student-search")
+def student_search():
+
+    query = request.args.get("query", "").strip()
+
+    student = students_col.find_one({
+        "$or": [
+            {"name": {"$regex": query, "$options": "i"}},
+            {"student_barcode": {"$regex": query, "$options": "i"}},
+            {"email": {"$regex": query, "$options": "i"}}
+        ]
+    })
+
+    if not student:
+        return jsonify({})
+
+    issues = list(issues_col.find({
+        "student_barcode": student["student_barcode"]
+    }))
+
+    current_books = []
+    history = []
+
+    for issue in issues:
+
+        book = books_col.find_one({
+            "book_barcode": issue["book_barcode"]
+        })
+
+        item = {
+            "bookId": issue["book_barcode"],
+            "bookName": book["title"] if book else "Unknown",
+            "issueDate": issue["issue_date"].strftime("%Y-%m-%d"),
+            "dueDate": issue["due_date"].strftime("%Y-%m-%d"),
+            "returnDate": issue["return_date"].strftime("%Y-%m-%d") if issue["return_date"] else "-",
+            "extended": issue.get("renew_count", 0) > 0,
+            "status": "Returned" if issue["return_date"] else "Issued"
+        }
+
+        history.append(item)
+
+        if issue["return_date"] is None:
+            current_books.append(item)
+
+    return jsonify({
+        "name": student["name"],
+        "rollNumber": student["student_barcode"],
+        "email": student["email"],
+        "phone": student.get("phone", "-"),
+        "department": student.get("department", "-"),
+        "year": student.get("year", "-"),
+        "section": student.get("section", "-"),
+        "totalBorrowed": len(history),
+        "returnedBooks": len([i for i in history if i["status"] == "Returned"]),
+        "currentBorrowed": len(current_books),
+        "extendedBooks": len([i for i in history if i["extended"]]),
+        "pendingBooks": len(current_books),
+        "currentBooks": current_books,
+        "history": history
+    })
+
+
+# ================= ISSUED BOOKS =================
+
+@app.route("/issued-books")
+def issued_books():
+
+    data = []
+
+    issues = issues_col.find({"return_date": None})
+
+    for issue in issues:
+
+        student = students_col.find_one({
+            "student_barcode": issue["student_barcode"]
+        })
+
+        book = books_col.find_one({
+            "book_barcode": issue["book_barcode"]
+        })
+
+        data.append({
+            "bookId": issue["book_barcode"],
+            "bookName": book["title"] if book else "Unknown",
+            "student": student["name"] if student else "Unknown",
+            "issueDate": issue["issue_date"].strftime("%Y-%m-%d"),
+            "dueDate": issue["due_date"].strftime("%Y-%m-%d"),
+            "status": "Issued"
+        })
+
+    return jsonify(data)
+
+
+# ================= OVERDUE BOOKS =================
+
+@app.route("/overdue-books")
+def overdue_books():
+
+    data = []
+
+    issues = issues_col.find({
+        "due_date": {"$lt": datetime.now()},
+        "return_date": None
+    })
+
+    for issue in issues:
+
+        student = students_col.find_one({
+            "student_barcode": issue["student_barcode"]
+        })
+
+        book = books_col.find_one({
+            "book_barcode": issue["book_barcode"]
+        })
+
+        days = (datetime.now() - issue["due_date"]).days
+
+        data.append({
+            "student": student["name"] if student else "Unknown",
+            "rollNumber": student["student_barcode"] if student else "-",
+            "book": book["title"] if book else "Unknown",
+            "daysLate": days,
+            "fine": days * 10,
+            "status": "Overdue"
+        })
+
+    return jsonify(data)
+
+
+# ================= LIVE SCANS =================
+
+@app.route("/live-scans")
+def live_scans():
+
+    scans = []
+
+    issues = issues_col.find().sort("issue_date", -1).limit(10)
+
+    for issue in issues:
+
+        student = students_col.find_one({
+            "student_barcode": issue["student_barcode"]
+        })
+
+        book = books_col.find_one({
+            "book_barcode": issue["book_barcode"]
+        })
+
+        scans.append({
+            "time": issue["issue_date"].strftime("%H:%M"),
+            "studentId": student["student_barcode"] if student else "-",
+            "studentName": student["name"] if student else "-",
+            "bookId": issue["book_barcode"],
+            "bookName": book["title"] if book else "-",
+            "action": "Issue"
+        })
+
+    return jsonify(scans)
+
+
+# ================= NOTIFICATIONS =================
+
+@app.route("/notifications")
+def notifications():
+
+    return jsonify([
+        {
+            "type": "success",
+            "message": "SmartScan Library System Running Successfully"
+        }
+    ])
+
+
+# ================= DEPARTMENT CHART =================
+
+@app.route("/chart/departments")
+def department_chart():
+
+    dept = {}
+
+    students = students_col.find()
+
+    for s in students:
+
+        d = s.get("department", "Unknown")
+
+        dept[d] = dept.get(d, 0) + 1
+
+    return jsonify({
+        "departments": list(dept.keys()),
+        "counts": list(dept.values())
+    })
+
+
 # ------------------ RUN ------------------
 import os
 
